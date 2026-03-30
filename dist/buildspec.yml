@@ -1,0 +1,49 @@
+version: 0.2
+
+env:
+  variables:
+    DOCKERHUB_USERNAME: sudheerttech
+    DOCKERHUB_PASSWORD: Riya@2026  # Preferably store as Secrets Manager/env var
+    IMAGE_NAME: brain-tasks-app
+    IMAGE_TAG: latest
+    CLUSTER_NAME: brain-tasks-cluster
+    AWS_REGION: us-east-1
+
+phases:
+  install:
+    runtime-versions:
+      docker: 18
+      python: 3.8
+    commands:
+      - echo Installing kubectl and aws-iam-authenticator...
+      - curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/kubectl
+      - chmod +x ./kubectl
+      - mv ./kubectl /usr/local/bin/kubectl
+      - curl -o aws-iam-authenticator https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/latest/download/aws-iam-authenticator-linux-amd64
+      - chmod +x ./aws-iam-authenticator
+      - mv ./aws-iam-authenticator /usr/local/bin/aws-iam-authenticator
+
+  pre_build:
+    commands:
+      - echo Logging into Docker Hub...
+      - echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
+      - echo Build started on `date`
+      - docker build -t $IMAGE_NAME .
+      - docker tag $IMAGE_NAME:latest $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG
+      - aws eks --region $AWS_REGION update-kubeconfig --name $CLUSTER_NAME
+
+  build:
+    commands:
+      - echo Pushing Docker image to Docker Hub...
+      - docker push $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG
+      - echo Deploying to EKS cluster...
+      - kubectl set image deployment/brain-tasks-app brain-tasks-container=$DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG
+      - kubectl rollout status deployment/brain-tasks-app
+
+  post_build:
+    commands:
+      - echo Build and deployment complete on `date`
+
+artifacts:
+  files:
+    - '**/*'
