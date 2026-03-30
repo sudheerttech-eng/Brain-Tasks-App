@@ -3,7 +3,7 @@ version: 0.2
 env:
   variables:
     DOCKERHUB_USERNAME: sudheerttech
-    DOCKERHUB_PASSWORD: Riya@2026  # Preferably store as Secrets Manager/env var
+    DOCKERHUB_PASSWORD: "Riya@2026"  # wrap in quotes
     IMAGE_NAME: brain-tasks-app
     IMAGE_TAG: latest
     CLUSTER_NAME: brain-tasks-cluster
@@ -16,7 +16,7 @@ phases:
       python: 3.8
     commands:
       - echo Installing kubectl and aws-iam-authenticator...
-      - curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/kubectl
+      - curl -o kubectl https://amazon-eks.s3.us-east-1.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/kubectl
       - chmod +x ./kubectl
       - mv ./kubectl /usr/local/bin/kubectl
       - curl -o aws-iam-authenticator https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/latest/download/aws-iam-authenticator-linux-amd64
@@ -45,5 +45,4 @@ phases:
       - echo Build and deployment complete on `date`
 
 artifacts:
-  files:
-    - '**/*'
+  files: none
